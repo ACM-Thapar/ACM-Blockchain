@@ -7,23 +7,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const flagDataDir = "datadir"
+
 func main() {
 	var acmtCmd = &cobra.Command{
 		Use:   "acmt",
-		Short: "The CLI of ACM's own Blockchain",
+		Short: "The CLI of ACM TIET's own Blockchain",
 		Run: func(cmd *cobra.Command, args []string) {
 		},
 	}
 
 	acmtCmd.AddCommand(versionCmd)
 	acmtCmd.AddCommand(balancesCmd())
-	acmtCmd.AddCommand(txCmd())
+	acmtCmd.AddCommand(runCmd())
 
 	err := acmtCmd.Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func addDefaultRequiredFlags(cmd *cobra.Command) {
+	cmd.Flags().String(flagDataDir, "", "Absolute path to the node data dir where the DB will/is stored")
+	cmd.MarkFlagRequired(flagDataDir)
 }
 
 func incorrectUsageErr() error {

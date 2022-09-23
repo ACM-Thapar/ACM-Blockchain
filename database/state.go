@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -17,14 +16,13 @@ type State struct {
 	latestBlockHash Hash
 }
 
-func NewStateFromDisk() (*State, error) {
-	cwd, err := os.Getwd()
+func NewStateFromDisk(dataDir string) (*State, error) {
+	err := initDataDirIfNotExists(dataDir)
 	if err != nil {
 		return nil, err
 	}
 
-	genFilePath := filepath.Join(cwd, "database", "genesis.json")
-	gen, err := loadGenesis(genFilePath)
+	gen, err := loadGenesis(getGenesisJsonFilePath(dataDir))
 	if err != nil {
 		return nil, err
 	}
@@ -34,13 +32,13 @@ func NewStateFromDisk() (*State, error) {
 		balances[account] = balance
 	}
 
-	txDbFilePath := filepath.Join(cwd, "database", "block.db")
-	f, err := os.OpenFile(txDbFilePath, os.O_APPEND|os.O_RDWR, 0600)
+	f, err := os.OpenFile(getBlocksDbFilePath(dataDir), os.O_APPEND|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
 	}
 
 	scanner := bufio.NewScanner(f)
+
 	state := &State{balances, make([]Tx, 0), f, Hash{}}
 
 	for scanner.Scan() {
@@ -62,6 +60,7 @@ func NewStateFromDisk() (*State, error) {
 
 		state.latestBlockHash = blockFs.Key
 	}
+
 	return state, nil
 }
 
@@ -83,7 +82,9 @@ func (s *State) AddTx(tx Tx) error {
 	if err := s.apply(tx); err != nil {
 		return err
 	}
+
 	s.txMempool = append(s.txMempool, tx)
+
 	return nil
 }
 
@@ -114,8 +115,8 @@ func (s *State) Persist() (Hash, error) {
 	return s.latestBlockHash, nil
 }
 
-func (s *State) Close() {
-	s.dbFile.Close()
+func (s *State) Close() error {
+	return s.dbFile.Close()
 }
 
 func (s *State) applyBlock(b Block) error {
@@ -130,7 +131,7 @@ func (s *State) applyBlock(b Block) error {
 
 func (s *State) apply(tx Tx) error {
 	if tx.IsReward() {
-		s.Balances[tx.To] += uint(tx.Value)
+		s.Balances[tx.To] += tx.Value
 		return nil
 	}
 
@@ -138,8 +139,8 @@ func (s *State) apply(tx Tx) error {
 		return fmt.Errorf("insufficient balance")
 	}
 
-	s.Balances[tx.From] -= uint(tx.Value)
-	s.Balances[tx.To] += uint(tx.Value)
+	s.Balances[tx.From] -= tx.Value
+	s.Balances[tx.To] += tx.Value
 
 	return nil
 }
