@@ -2,17 +2,21 @@ package database
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
 
+type Snapshot [32]byte
 type State struct {
 	Balances  map[Account]uint
 	txMempool []Tx
 
-	dbFile *os.File
+	dbFile   *os.File
+	snapshot Snapshot
 }
 
 func NewStateFromDisk() (*State, error) {
@@ -31,6 +35,7 @@ func NewStateFromDisk() (*State, error) {
 	for account, balance := range gen.Balances {
 		balances[account] = balance
 	}
+
 	txDbFilePath := filepath.Join(cwd, "database", "tx.db")
 	f, err := os.OpenFile(txDbFilePath, os.O_APPEND|os.O_RDWR, 0600)
 	if err != nil {
@@ -38,7 +43,7 @@ func NewStateFromDisk() (*State, error) {
 	}
 
 	scanner := bufio.NewScanner(f)
-	state := &State{balances, make([]Tx, 0), f}
+	state := &State{balances, make([]Tx, 0), f, Snapshot{}}
 
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
@@ -46,13 +51,20 @@ func NewStateFromDisk() (*State, error) {
 		}
 
 		var tx Tx
-		json.Unmarshal(scanner.Bytes(), &tx)
+		err = json.Unmarshal(scanner.Bytes(), &tx)
+		if err != nil {
+			return nil, err
+		}
 
 		if err := state.apply(tx); err != nil {
 			return nil, err
 		}
 	}
 	return state, nil
+}
+
+func (s *State) LatestSnapshot() Snapshot {
+	return s.snapshot
 }
 
 func (s *State) Add(tx Tx) error {
@@ -63,21 +75,31 @@ func (s *State) Add(tx Tx) error {
 	return nil
 }
 
-func (s *State) Persist() error {
+func (s *State) Persist() (Snapshot, error) {
 	mempool := make([]Tx, len(s.txMempool))
 	copy(mempool, s.txMempool)
 
 	for i := 0; i < len(mempool); i++ {
 		txJson, err := json.Marshal(mempool[i])
 		if err != nil {
-			return err
+			return Snapshot{}, err
 		}
+		fmt.Printf("Persisting new TX to disk:\n")
+		fmt.Printf("\t%s\n", txJson)
+
 		if _, err := s.dbFile.Write(append(txJson, '\n')); err != nil {
-			return err
+			return Snapshot{}, err
 		}
-		s.txMempool = s.txMempool[1:]
+
+		err = s.doSnapshot()
+		if err != nil {
+			return Snapshot{}, err
+		}
+		fmt.Printf("New DB Snapshot: %x\n", s.snapshot)
+
+		s.txMempool = append(s.txMempool[:i], s.txMempool[i+1:]...)
 	}
-	return nil
+	return s.snapshot, nil
 }
 
 func (s *State) Close() {
@@ -96,6 +118,22 @@ func (s *State) apply(tx Tx) error {
 
 	s.Balances[tx.From] -= uint(tx.Value)
 	s.Balances[tx.To] += uint(tx.Value)
+
+	return nil
+}
+
+func (s *State) doSnapshot() error {
+	_, err := s.dbFile.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	txsData, err := ioutil.ReadAll(s.dbFile)
+	if err != nil {
+		return err
+	}
+
+	s.snapshot = sha256.Sum256(txsData)
 
 	return nil
 }

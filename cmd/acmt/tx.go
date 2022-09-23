@@ -11,6 +11,7 @@ import (
 const flagFrom = "from"
 const flagTo = "to"
 const flagValue = "value"
+const flagData = "data"
 
 func txCmd() *cobra.Command {
 	var txsCmd = &cobra.Command{
@@ -36,10 +37,9 @@ func txAddCmd() *cobra.Command {
 			from, _ := cmd.Flags().GetString(flagFrom)
 			to, _ := cmd.Flags().GetString(flagTo)
 			value, _ := cmd.Flags().GetUint(flagValue)
+			data, _ := cmd.Flags().GetString(flagData)
 
-			fromAcc := database.NewAccount(from)
-			toAcc := database.NewAccount(to)
-			tx := database.NewTx(fromAcc, toAcc, value, "")
+			tx := database.NewTx(database.NewAccount(from), database.NewAccount(to), value, data)
 
 			state, err := database.NewStateFromDisk()
 			if err != nil {
@@ -54,7 +54,7 @@ func txAddCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = state.Persist()
+			_, err = state.Persist()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
@@ -72,6 +72,8 @@ func txAddCmd() *cobra.Command {
 
 	cmd.Flags().Uint(flagValue, 0, "How many tokens to send")
 	cmd.MarkFlagRequired(flagValue)
+
+	cmd.Flags().String(flagData, "", "Possible values: 'reward'")
 
 	return cmd
 }
