@@ -19,7 +19,7 @@ func main() {
 
 	acmtCmd.AddCommand(versionCmd)
 	acmtCmd.AddCommand(balancesCmd())
-	acmtCmd.AddCommand(txCmd())
+	acmtCmd.AddCommand(runCmd())
 
 	err := acmtCmd.Execute()
 	if err != nil {

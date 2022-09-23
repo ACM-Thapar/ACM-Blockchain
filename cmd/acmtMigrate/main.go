@@ -9,7 +9,8 @@ import (
 )
 
 func main() {
-	state, err := database.NewStateFromDisk()
+	cwd, _ := os.Getwd()
+	state, err := database.NewStateFromDisk(cwd)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -20,8 +21,8 @@ func main() {
 		database.Hash{},
 		uint64(time.Now().Unix()),
 		[]database.Tx{
-			database.NewTx("jhnda", "jogesh", 2000, ""),
-			database.NewTx("jhnda", "uddu", 2000, ""),
+			database.NewTx("andrej", "andrej", 3, ""),
+			database.NewTx("andrej", "andrej", 700, "reward"),
 		},
 	)
 
@@ -32,7 +33,12 @@ func main() {
 		block0hash,
 		uint64(time.Now().Unix()),
 		[]database.Tx{
-			database.NewTx("jhnda", "uddu", 1000, "last night reward"),
+			database.NewTx("andrej", "babayaga", 2000, ""),
+			database.NewTx("andrej", "andrej", 100, "reward"),
+			database.NewTx("babayaga", "andrej", 1, ""),
+			database.NewTx("babayaga", "caesar", 1000, ""),
+			database.NewTx("babayaga", "andrej", 50, ""),
+			database.NewTx("andrej", "andrej", 600, "reward"),
 		},
 	)
 
