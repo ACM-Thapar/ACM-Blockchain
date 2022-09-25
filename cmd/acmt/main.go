@@ -4,24 +4,28 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ACM-Thapar/ACM-Blockchain/fs"
 	"github.com/spf13/cobra"
 )
 
 const flagDataDir = "datadir"
+const flagIP = "ip"
+const flagPort = "port"
 
 func main() {
-	var acmtCmd = &cobra.Command{
-		Use:   "acmt",
-		Short: "The CLI of ACM TIET's own Blockchain",
+	var tbbCmd = &cobra.Command{
+		Use:   "tbb",
+		Short: "The Blockchain Bar CLI",
 		Run: func(cmd *cobra.Command, args []string) {
 		},
 	}
 
-	acmtCmd.AddCommand(versionCmd)
-	acmtCmd.AddCommand(balancesCmd())
-	acmtCmd.AddCommand(runCmd())
+	tbbCmd.AddCommand(migrateCmd())
+	tbbCmd.AddCommand(versionCmd)
+	tbbCmd.AddCommand(runCmd())
+	tbbCmd.AddCommand(balancesCmd())
 
-	err := acmtCmd.Execute()
+	err := tbbCmd.Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -31,6 +35,12 @@ func main() {
 func addDefaultRequiredFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagDataDir, "", "Absolute path to the node data dir where the DB will/is stored")
 	cmd.MarkFlagRequired(flagDataDir)
+}
+
+func getDataDirFromCmd(cmd *cobra.Command) string {
+	dataDir, _ := cmd.Flags().GetString(flagDataDir)
+
+	return fs.ExpandPath(dataDir)
 }
 
 func incorrectUsageErr() error {
