@@ -19,18 +19,19 @@ func initDataDirIfNotExists(dataDir string) error {
 	if fileExist(getGenesisJsonFilePath(dataDir)) {
 		return nil
 	}
-	dbDir := getDatabaseDirPath(dataDir)
-	if err := os.MkdirAll(dbDir, os.ModePerm); err != nil {
+
+	if err := os.MkdirAll(getDatabaseDirPath(dataDir), os.ModePerm); err != nil {
 		return err
 	}
-	gen := getGenesisJsonFilePath(dataDir)
-	if err := writeGenesisToDisk(gen); err != nil {
+
+	if err := writeGenesisToDisk(getGenesisJsonFilePath(dataDir)); err != nil {
 		return err
 	}
-	blocks := getBlocksDbFilePath(dataDir)
-	if err := writeEmptyBlocksDbToDisk(blocks); err != nil {
+
+	if err := writeEmptyBlocksDbToDisk(getBlocksDbFilePath(dataDir)); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -41,6 +42,18 @@ func fileExist(filePath string) bool {
 	}
 
 	return true
+}
+
+func dirExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return true, err
 }
 
 func writeEmptyBlocksDbToDisk(path string) error {
