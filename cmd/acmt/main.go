@@ -14,9 +14,13 @@ const flagPort = "port"
 
 func main() {
 	var tbbCmd = &cobra.Command{
-		Use:   "tbb",
-		Short: "The Blockchain Bar CLI",
+		Use:   "acmt",
+		Short: "The CLI of ACM's own Blockchain",
 		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 {
+				cmd.Help()
+				os.Exit(0)
+			}
 		},
 	}
 

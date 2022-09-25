@@ -193,7 +193,7 @@ func applyTx(tx Tx, s *State) error {
 	}
 
 	if tx.Value > s.Balances[tx.From] {
-		return fmt.Errorf("wrong TX. Sender '%s' balance is %d TBB. Tx cost is %d TBB", tx.From, s.Balances[tx.From], tx.Value)
+		return fmt.Errorf("wrong TX. Sender '%s' balance is %d ACMT. Tx cost is %d ACMT", tx.From, s.Balances[tx.From], tx.Value)
 	}
 
 	s.Balances[tx.From] -= tx.Value
