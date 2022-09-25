@@ -26,8 +26,8 @@ var migrateCmd = func() *cobra.Command {
 				state.NextBlockNumber(),
 				uint64(time.Now().Unix()),
 				[]database.Tx{
-					database.NewTx("andrej", "andrej", 3, ""),
-					database.NewTx("andrej", "andrej", 700, "reward"),
+					database.NewTx("jhnda", "uddu", 1000, ""),
+					database.NewTx("jhnda", "jogesh", 1000, ""),
 				},
 			)
 
@@ -42,12 +42,12 @@ var migrateCmd = func() *cobra.Command {
 				state.NextBlockNumber(),
 				uint64(time.Now().Unix()),
 				[]database.Tx{
-					database.NewTx("andrej", "babayaga", 2000, ""),
-					database.NewTx("andrej", "andrej", 100, "reward"),
-					database.NewTx("babayaga", "andrej", 1, ""),
-					database.NewTx("babayaga", "caesar", 1000, ""),
-					database.NewTx("babayaga", "andrej", 50, ""),
-					database.NewTx("andrej", "andrej", 600, "reward"),
+					database.NewTx("jhnda", "uddu", 1000, "last night reward"),
+					database.NewTx("jhnda", "jogesh", 100, "reward"),
+					database.NewTx("jhnda", "pimdii", 10000, ""),
+					database.NewTx("jhnda", "pimdii", 100000, ""),
+					database.NewTx("jhnda", "haris", 50, ""),
+					database.NewTx("haris", "jhnda", 50, "money back"),
 				},
 			)
 
@@ -62,7 +62,7 @@ var migrateCmd = func() *cobra.Command {
 				state.NextBlockNumber(),
 				uint64(time.Now().Unix()),
 				[]database.Tx{
-					database.NewTx("andrej", "andrej", 24700, "reward"),
+					database.NewTx("jhnda", "jhnda", 24700, "reward"),
 				},
 			)
 

@@ -161,9 +161,6 @@ func (s *State) copy() State {
 	return c
 }
 
-// applyBlock verifies if block can be added to the blockchain.
-//
-// Block metadata are verified as well as transactions within (sufficient balances, etc).
 func applyBlock(b Block, s State) error {
 	nextExpectedBlockNumber := s.latestBlock.Header.Number + 1
 
