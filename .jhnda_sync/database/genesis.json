@@ -1,8 +1,0 @@
-
-{
-    "genesis_time": "2022-09-22T00:00:00.000000000Z",
-    "chain_id": "acmTiet-blockchain-ledger",
-    "balances": {
-        "jhnda": 1000000
-    }
-}

@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -25,11 +26,16 @@ func (pn PeerNode) TcpAddress() string {
 
 type Node struct {
 	dataDir string
+	info    PeerNode
 	ip      string
 	port    uint64
 	state   *database.State
 
-	knownPeers map[string]PeerNode
+	knownPeers      map[string]PeerNode
+	pendingTXs      map[string]database.Tx
+	archivedTXs     map[string]database.Tx
+	newSyncedBlocks chan database.Block
+	newPendingTXs   chan database.Tx
 }
 
 type PeerNode struct {
@@ -69,7 +75,7 @@ func (n *Node) Run() error {
 	})
 
 	http.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
-		txAddHandler(w, r, state)
+		txAddHandler(w, r, n)
 	})
 
 	http.HandleFunc(endpointStatus, func(w http.ResponseWriter, r *http.Request) {
@@ -106,4 +112,27 @@ func (n *Node) IsKnownPeer(peer PeerNode) bool {
 }
 func (n *Node) AddPeer(peer PeerNode) {
 	n.knownPeers[peer.TcpAddress()] = peer
+}
+
+func (n *Node) AddPendingTX(tx database.Tx, fromPeer PeerNode) error {
+	txHash, err := tx.Hash()
+	if err != nil {
+		return err
+	}
+
+	txJson, err := json.Marshal(tx)
+	if err != nil {
+		return err
+	}
+
+	_, isAlreadyPending := n.pendingTXs[txHash.Hex()]
+	_, isArchived := n.archivedTXs[txHash.Hex()]
+
+	if !isAlreadyPending && !isArchived {
+		fmt.Printf("Added Pending TX %s from Peer %s\n", txJson, fromPeer.TcpAddress())
+		n.pendingTXs[txHash.Hex()] = tx
+		n.newPendingTXs <- tx
+	}
+
+	return nil
 }
