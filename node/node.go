@@ -10,6 +10,7 @@ import (
 	"github.com/ACM-Thapar/ACM-Blockchain/database"
 )
 
+const DefaultMiner = ""
 const DefaultIP = "127.0.0.1"
 const DefaultHTTPort = 8080
 const endpointStatus = "/node/status"
@@ -20,6 +21,7 @@ const endpointSyncQueryKeyFromBlock = "fromBlock"
 const endpointAddPeer = "/node/peer"
 const endpointAddPeerQueryKeyIP = "ip"
 const endpointAddPeerQueryKeyPort = "port"
+const endpointAddPeerQueryKeyMiner = "miner"
 
 const miningIntervalSeconds = 10
 
@@ -50,30 +52,39 @@ type PeerNode struct {
 	connected   bool
 }
 
-func New(dataDir string, ip string, port uint64, bootstrap PeerNode) *Node {
+func New(dataDir string, ip string, port uint64, acc database.Account, bootstrap PeerNode) *Node {
 	knownPeers := make(map[string]PeerNode)
 	knownPeers[bootstrap.TcpAddress()] = bootstrap
 
 	return &Node{
-		dataDir:    dataDir,
-		ip:         ip,
-		port:       port,
-		knownPeers: knownPeers,
+		dataDir:         dataDir,
+		info:            NewPeerNode(ip, port, false, acc, true),
+		knownPeers:      knownPeers,
+		pendingTXs:      make(map[string]database.Tx),
+		archivedTXs:     make(map[string]database.Tx),
+		newSyncedBlocks: make(chan database.Block),
+		newPendingTXs:   make(chan database.Tx, 10000),
+		isMining:        false,
 	}
 }
 
-func (n *Node) Run() error {
-	ctx := context.Background()
-	fmt.Println(fmt.Sprintf("Listening on: %s:%d", n.ip, n.port))
+func (n *Node) Run(ctx context.Context) error {
+	fmt.Println(fmt.Sprintf("Listening on: %s:%d", n.info.IP, n.info.Port))
 
 	state, err := database.NewStateFromDisk(n.dataDir)
 	if err != nil {
 		return err
 	}
 	defer state.Close()
+
 	n.state = state
 
+	fmt.Println("Blockchain state:")
+	fmt.Printf("	- height: %d\n", n.state.LatestBlock().Header.Number)
+	fmt.Printf("	- hash: %s\n", n.state.LatestBlockHash().Hex())
+
 	go n.sync(ctx)
+	go n.mine(ctx)
 
 	http.HandleFunc("/balances/list", func(w http.ResponseWriter, r *http.Request) {
 		listBalancesHandler(w, r, state)
@@ -95,9 +106,24 @@ func (n *Node) Run() error {
 		addPeerHandler(w, r, n)
 	})
 
-	return http.ListenAndServe(fmt.Sprintf(":%d", n.port), nil)
+	server := &http.Server{Addr: fmt.Sprintf(":%d", n.info.Port)}
+
+	go func() {
+		<-ctx.Done()
+		_ = server.Close()
+	}()
+
+	err = server.ListenAndServe()
+	if err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
 }
 
+func (n *Node) LatestBlockHash() database.Hash {
+	return n.state.LatestBlockHash()
+}
 func NewPeerNode(ip string, port uint64, isBootstrap bool, acc database.Account, connected bool) PeerNode {
 	return PeerNode{ip, port, isBootstrap, acc, connected}
 }
