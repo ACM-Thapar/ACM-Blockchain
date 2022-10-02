@@ -1,4 +1,4 @@
-# Welcome to the contributions of CS_COURSE_GUIDE
+# Welcome to the contributions of ACM-Blockchain
 
 ## Before contributing
 
