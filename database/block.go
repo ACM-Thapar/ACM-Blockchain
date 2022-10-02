@@ -8,6 +8,8 @@ import (
 	"fmt"
 )
 
+const BlockReward = 100
+
 type Hash [32]byte
 
 func (h Hash) MarshalText() ([]byte, error) {

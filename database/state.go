@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
 )
 
 type State struct {
@@ -89,7 +88,7 @@ func (s *State) AddBlocks(blocks []Block) error {
 func (s *State) AddBlock(b Block) (Hash, error) {
 	pendingState := s.copy()
 
-	err := applyBlock(b, pendingState)
+	err := applyBlock(b, &pendingState)
 	if err != nil {
 		return Hash{}, err
 	}
@@ -161,18 +160,22 @@ func (s *State) copy() State {
 	return c
 }
 
-func applyBlock(b Block, s State) error {
-	nextExpectedBlockNumber := s.latestBlock.Header.Number + 1
+func applyBlock(b Block, s *State) error {
 
-	if s.hasGenesisBlock && b.Header.Number != nextExpectedBlockNumber {
-		return fmt.Errorf("next expected block must be '%d' not '%d'", nextExpectedBlockNumber, b.Header.Number)
+	hash, err := b.Hash()
+	if err != nil {
+		return err
 	}
 
-	if s.hasGenesisBlock && s.latestBlock.Header.Number > 0 && !reflect.DeepEqual(b.Header.Parent, s.latestBlockHash) {
-		return fmt.Errorf("next block parent hash must be '%x' not '%x'", s.latestBlockHash, b.Header.Parent)
+	if !IsBlockHashValid(hash) {
+		return fmt.Errorf("invalid block hash %x", hash)
 	}
-
-	return applyTXs(b.TXs, &s)
+	err = applyTXs(b.TXs, s)
+	if err != nil {
+		return err
+	}
+	s.Balances[b.Header.Miner] += BlockReward
+	return nil
 }
 
 func applyTXs(txs []Tx, s *State) error {

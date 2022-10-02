@@ -19,7 +19,7 @@ func runCmd() *cobra.Command {
 			ip, _ := cmd.Flags().GetString(flagIP)
 			port, _ := cmd.Flags().GetUint64(flagPort)
 
-			fmt.Println("Launching TBB node and its HTTP API...")
+			fmt.Println("Launching ACMT node and its HTTP API...")
 
 			bootstrap := node.NewPeerNode(
 				"127.0.0.1",
