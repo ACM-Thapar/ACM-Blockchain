@@ -20,7 +20,7 @@ func TestValidBlockHash(t *testing.T) {
 }
 
 func TestMine(t *testing.T) {
-	miner := database.NewAccount("jhnda")
+	miner := database.NewAccount("jhndaaaaa")
 	pendingBlock := createRandomPendingBlock(miner)
 	ctx := context.Background()
 	minedBlock, err := Mine(ctx, pendingBlock)
