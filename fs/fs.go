@@ -31,3 +31,7 @@ func homeDir() string {
 	}
 	return ""
 }
+
+func RemoveDir(path string) error {
+	return os.RemoveAll(path)
+}
