@@ -14,7 +14,7 @@ const flagIP = "ip"
 const flagPort = "port"
 
 func main() {
-	var tbbCmd = &cobra.Command{
+	var acmtCmd = &cobra.Command{
 		Use:   "acmt",
 		Short: "The CLI of ACM's own Blockchain",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -25,12 +25,12 @@ func main() {
 		},
 	}
 
-	tbbCmd.AddCommand(migrateCmd())
-	tbbCmd.AddCommand(versionCmd)
-	tbbCmd.AddCommand(runCmd())
-	tbbCmd.AddCommand(balancesCmd())
+	acmtCmd.AddCommand(migrateCmd())
+	acmtCmd.AddCommand(versionCmd)
+	acmtCmd.AddCommand(runCmd())
+	acmtCmd.AddCommand(balancesCmd())
 
-	err := tbbCmd.Execute()
+	err := acmtCmd.Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

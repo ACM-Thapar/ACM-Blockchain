@@ -25,7 +25,7 @@ func (n *Node) sync(ctx context.Context) error {
 
 func (n *Node) doSync() {
 	for _, peer := range n.knownPeers {
-		if n.ip == peer.IP && n.port == peer.Port {
+		if n.info.IP == peer.IP && n.info.Port == peer.Port {
 			continue
 		}
 
@@ -54,6 +54,11 @@ func (n *Node) doSync() {
 		}
 
 		err = n.syncKnownPeers(peer, status)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+			continue
+		}
+		err = n.syncPendingTXs(peer, status.PendingTXs)
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err)
 			continue
@@ -112,9 +117,9 @@ func (n *Node) joinKnownPeers(peer PeerNode) error {
 		peer.TcpAddress(),
 		endpointAddPeer,
 		endpointAddPeerQueryKeyIP,
-		n.ip,
+		n.info.IP,
 		endpointAddPeerQueryKeyPort,
-		n.port,
+		n.info.Port,
 	)
 
 	res, err := http.Get(url)

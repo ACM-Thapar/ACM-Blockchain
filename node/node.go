@@ -32,8 +32,6 @@ func (pn PeerNode) TcpAddress() string {
 type Node struct {
 	dataDir string
 	info    PeerNode
-	ip      string
-	port    uint64
 	state   *database.State
 
 	knownPeers      map[string]PeerNode
@@ -133,7 +131,7 @@ func (n *Node) RemovePeer(peer PeerNode) {
 }
 
 func (n *Node) IsKnownPeer(peer PeerNode) bool {
-	if peer.IP == n.ip && peer.Port == n.port {
+	if peer.IP == n.info.IP && peer.Port == n.info.Port {
 		return true
 	}
 
@@ -255,4 +253,14 @@ func (n *Node) getPendingTXsAsArray() []database.Tx {
 	}
 
 	return txs
+}
+func (n *Node) syncPendingTXs(peer PeerNode, txs []database.Tx) error {
+	for _, tx := range txs {
+		err := n.AddPendingTX(tx, peer)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
