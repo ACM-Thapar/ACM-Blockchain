@@ -29,6 +29,7 @@ func main() {
 	acmtCmd.AddCommand(versionCmd)
 	acmtCmd.AddCommand(runCmd())
 	acmtCmd.AddCommand(balancesCmd())
+	acmtCmd.AddCommand(walletCmd())
 
 	err := acmtCmd.Execute()
 	if err != nil {
