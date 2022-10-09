@@ -12,6 +12,7 @@ const flagDataDir = "datadir"
 const flagMiner = "miner"
 const flagIP = "ip"
 const flagPort = "port"
+const flagKeystoreFile = "keystore"
 
 func main() {
 	var acmtCmd = &cobra.Command{
@@ -51,4 +52,9 @@ func getDataDirFromCmd(cmd *cobra.Command) string {
 
 func incorrectUsageErr() error {
 	return fmt.Errorf("incorrect usage")
+}
+
+func addKeystoreFlag(cmd *cobra.Command) {
+	cmd.Flags().String(flagKeystoreFile, "", "Absolute path to the encrypted keystore file")
+	cmd.MarkFlagRequired(flagKeystoreFile)
 }
